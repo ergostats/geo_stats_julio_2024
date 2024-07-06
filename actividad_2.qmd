@@ -1,0 +1,85 @@
+---
+title: "Documento  de trabajo # 2"
+format: html
+editor: visual
+---
+
+# Introducción
+El censo de población y vivienda de 2022, realizado por el Instituto Nacional de Estadística y Censos (INEC) de Ecuador, es una labor monumental que recolecta información detallada sobre las características demográficas, sociales y económicas de la población. Este censo es fundamental para la planificación y ejecución de políticas públicas, así como para la toma de decisiones en sectores como la salud, la educación y el desarrollo urbano.
+
+El INEC se encarga de diseñar y llevar a cabo este proceso con precisión y rigurosidad, asegurando la calidad de los datos recolectados. Puedes acceder a los resultados del censo en INEC Censo 2022.
+
+En esta clase, utilizaremos los datos del censo para mostrar la densidad poblacional y el área del Ecuador en 2022. La densidad poblacional se refiere al número de personas por unidad de superficie (habitantes por km²) y es un indicador clave en estadística y econometría espacial, ya que permite analizar cómo se distribuye la población en el espacio geográfico.
+
+## Paso 1: Preparativos
+
+1. **Crear la estructura del proyecto**:
+   - Asegúrense de tener una carpeta llamada `data` dentro de su proyecto.
+   - Coloquen el archivo de Excel con los resultados del censo y el archivo shapefile que les proporcionaremos dentro de la carpeta `data`.
+
+2. **Instalar y cargar las librerías necesarias**:
+```{r}
+   install.packages(c("readxl", "tidyverse", "sf"))
+   library(readxl)
+   library(tidyverse)
+   library(sf)
+```
+
+## Paso 2: Explorar las hojas del archivo Excel
+
+1. **Explorar las hojas**:
+```{r}
+   excel_sheets("data/resultados_censo.xlsx")
+```
+
+## Paso 3: Leer un rango específico de filas y columnas
+
+1. **Leer un rango específico**:
+```{r}
+   censo_data <- read_excel("data/resultados_censo.xlsx", sheet = "Hoja1", range = "A1:D100")
+```
+
+## Paso 4: Combinar los datos del censo con el shapefile
+
+1. **Cargar el shapefile**:
+```{r}
+   provincias_shape <- st_read("data/provincias.shp")
+```
+
+2. **Explicación de los tipos de join**:
+   - **Inner Join**: Devuelve filas cuando hay coincidencias en ambas tablas.
+   - **Left Join**: Devuelve todas las filas de la tabla de la izquierda y las coincidencias de la tabla de la derecha.
+   - **Right Join**: Devuelve todas las filas de la tabla de la derecha y las coincidencias de la tabla de la izquierda.
+   - **Anti Join**: Devuelve filas de la tabla de la izquierda que no tienen coincidencias en la tabla de la derecha.
+
+   💡 **Consejo**: Usen `left_join` o `right_join` adecuadamente para asegurarse de que el shapefile (el mapa) sea prioritario si faltan datos en el censo.
+
+3. **Combinar los datos usando `left_join`**:
+```{r}
+   censo_shape <- left_join(provincias_shape, censo_data, by = "provincia")
+```
+
+4. **Manejo de diferencias en mayúsculas con `case_when`**:
+```{r}
+   censo_data <- censo_data %>%
+     mutate(provincia = case_when(
+       provincia == "Azuay" ~ "AZUAY",
+       provincia == "Bolívar" ~ "BOLÍVAR",
+       TRUE ~ provincia
+     ))
+
+   censo_shape <- left_join(provincias_shape, censo_data, by = "provincia")
+```
+
+## Paso 5: Guardar su trabajo
+
+1. **Guardar el gráfico en formato PNG**:
+```{r}
+   ggsave("mi_grafico.png", plot = last_plot(), width = 10, height = 8)
+```
+
+## Recordatorio
+
+- **Incluyan la fuente de los datos (INEC) y su nombre en el gráfico**.
+- **Sigan buenas prácticas de programación**: comenten su código y manténganlo organizado.
+
